@@ -1,0 +1,78 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      default-filters:
+        - name: AddResponseHeader
+          args:
+            name: X-Gateway
+            value: spring-cloud-gateway
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/users/**
+          filters:
+            - RewritePath=/users/(?<segment>.*), /${segment}
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@principalOrIpKeyResolver}"
+                redis-rate-limiter.replenishRate: 100     # 100 req/мин
+                redis-rate-limiter.burstCapacity: 150
+            - name: CircuitBreaker
+              args:
+                name: userCircuit
+                fallbackUri: forward:/__fallback/users
+            - name: Retry
+              args:
+                retries: 2
+                statuses: BAD_GATEWAY, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT
+                methods: GET
+
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/orders/**
+          filters:
+            - RewritePath=/orders/(?<segment>.*), /${segment}
+      metrics:
+        enabled: true
+
+    loadbalancer:
+      cache:
+        enabled: true
+
+  redis:
+    host: localhost
+    port: 6379
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8089/realms/master  # подставь свой realm
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+# включает метрики по роутам
+#spring:
+#  cloud:
+#    gateway:
+#      metrics:
+#        enabled: true
