@@ -31,7 +31,7 @@ dependencies {
 
     // Reactive web + Gateway
     implementation("org.springframework.boot:spring-boot-starter-webflux")
-    implementation("org.springframework.cloud:spring-cloud-starter-gateway") // Исправил на правильный артефакт
+    implementation("org.springframework.cloud:spring-cloud-starter-gateway")
 
     // Security
     implementation("org.springframework.boot:spring-boot-starter-security")
