@@ -1,4 +1,4 @@
-package cache;
+package com.api.gateway.cache;
 
 import org.reactivestreams.Publisher;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
